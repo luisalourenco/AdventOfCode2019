@@ -16,19 +16,27 @@ def checkPasswordCriteria(password):
     dict = {} 
     crescent = True
     adjacent = False
+    listAdjacent = []
     for i in range(0, 6):
         c = password[i]
 
-        if dict.get(c) == i-1:
+        if dict.get(c) == None:
+            dict[c] = []
+        
+        if (i-1) in dict.get(c):
             adjacent = True
-        dict[c] = i
+            listAdjacent.append(c)     
+            
+        dict.get(c).append(i)
 
         if int(c) < lastDigit:
             crescent = False
         lastDigit = int(c)
 
- 
-    return crescent and adjacent
+    for c in listAdjacent:
+        if password.count(c) == 2:
+            return crescent and adjacent
+    return False
 
 
 count = 0

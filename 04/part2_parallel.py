@@ -1,7 +1,8 @@
-input = '136760-595730' 
+import multiprocessing as mp
 
 lowerBound = 136760
 upperBound = 595730
+
 
 # It is a six-digit number.
 # The value is within the range given in your puzzle input.
@@ -39,10 +40,30 @@ def checkPasswordCriteria(password):
     return False
 
 
-count = 0
-for p in range(lowerBound, upperBound):
-    password = str(p)
-    if checkPasswordCriteria(password):
-        count += 1
+def secureContainer(dataset, lowerBound, upperBound):
+    count = 0
+    for p in dataset:
+        password = str(p)
+        if checkPasswordCriteria(password):
+            count += 1
+    return count
+
+
+processors = mp.cpu_count()
+
+print (processors)
+# Step 1: Init multiprocessing.Pool()
+pool = mp.Pool(processors)
+
+dataset = range(lowerBound, upperBound)
+
+
+# Step 2: `pool.apply` the `secureContainer`
+count = pool.apply(secureContainer, args=(dataset, lowerBound, upperBound))
+
+
+# Step 3: Don't forget to close
+pool.close()    
+
 
 print (count)

@@ -7,88 +7,68 @@ def mul(a, b):
     return a * b
 
 
-def nextStep(pc):
-    if pc == 1:
-         return (pc + 4, pc + 1, pc + 2, pc + 3)
-    elif pc == 2:
-        return (pc + 4, pc + 1, pc + 2, pc + 3)
+def nextStep(opCode):
+    if opCode == 1 or opCode == 2:
+         return 4
     else:
-        return (pc + 1, pc + 2, 0, 0)
+        return 2
 
-# (op_code, a, b, res)
+# (opCode, a, b, res)
 def treatInput(pc, sequence):
-    if sequence[pc] == 99:
-        return (99, 0, 0, 0)
-    
-    op = str(sequence[pc])
-    if len(op) == 1:
-        if sequence[pc] == 3 or sequence[pc] == 4:
-            return (sequence[pc], sequence[pc+1], 0, 0)
-        else:
-            return (sequence[pc], sequence[sequence[pc+1]], sequence[sequence[pc+2]], sequence[sequence[pc+3]])
-    
-    if len(op) == 2:
-        if op[0] == 1:
-            return (sequence[pc], sequence[pc+1], sequence[pc+2], sequence[pc+3])
-        else:
-            return (sequence[pc], sequence[pc+1], sequence[pc+2], sequence[pc+3])
-    
-    
-    elif len(op) == 3:
+    instruction = str(sequence[pc])
+    instruction = instruction.zfill(4)
 
-    elif len(op) == 4:
-    
-    elif len(op) == 5:
-        if op[0] == 0:
-            return (op[1:], sequence[pc+1], sequence[pc+2], sequence[pc+3])
-        else: 
-            return (op[1:], sequence[pc+1], sequence[pc+2], sequence[pc+3])
+    opCode = int(instruction[2:4])
+    leftMode = int(instruction[1])
+    rightMode = int(instruction[0])
+
+    if opCode == 99:
+        return (99, 0, 0, 0)
+    if opCode == 1 or opCode == 2:
+        a =  sequence[pc + 1]
+        b =  sequence[pc + 2]
+        if leftMode == 0:
+            a = sequence[a]
+        if rightMode == 0:
+            b = sequence[b]
+        res = sequence[pc + 3]
+        return (opCode, a, b, res)
+    if opCode == 3 or opCode == 4:
+        return (opCode, 0, 0, 0)
 
 
 def IntCode(sequence):
     # init positions
     pc = 0
-    
-    while sequence[pc] != 99:  
+    opCode = sequence[pc]
 
-        (op_code, a, b, res) = treatInput(pc, sequence)
+    while opCode != 99:  
 
-        if op_code == 1:
-            a = sequence[pc + 1]
-            b = sequence[pc + 2]
-            res = sequence[pc + 3]
-            sequence[res] = add(sequence[a], sequence[b])
+        (opCode, a, b, res) = treatInput(pc, sequence)
 
-        elif op_code == 2:
-            a = sequence[pc + 1]
-            b = sequence[pc + 2]
-            res = sequence[pc + 3]
-            sequence[res] = mul(sequence[a], sequence[b])
+        if opCode == 1:
+            sequence[res] = add(a, b)
+
+        elif opCode == 2:
+            sequence[res] = mul(a, b)
         
         #input
-        elif op_code == 3:
+        elif opCode == 3:
             a = sequence[pc + 1]
             sequence[a] = 1
-            pc += 2 
 
-        elif op_code == 4:
+        elif opCode == 4:
             a = sequence[pc + 1]
             print(sequence[a])
-            pc += 2
         
-        (pc, a, b, res) = nextStep(pc)
+        pc += nextStep(opCode)
 
     return sequence
 
 with open(filepath) as fp: 	
-    input = fp.readline().strip().split(',')
-    
+    input = fp.readline().strip().split(',')    
     input = [int(i) for i in input]
-    # replace position 1 with value 12, and replace position 2 with value 2.
-    #input[1] = 12
-    #input[2] = 2
     
     input = IntCode(input)
-    print(input[0])
 
     

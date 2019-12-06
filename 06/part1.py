@@ -1,15 +1,15 @@
 filepath = 'input.txt'
 
-dict = {} 
+graph = {} 
 
-def aux(l, dict):
-    if len(l) == 1:
-        return 1
-
-    res = len(l)
-    for e in l:
-        res += aux(e, dict)
-    return res
+def aux(elem, graph):
+    count = 0
+    while True:
+        if elem == None:
+            break
+        count += 1
+        elem = graph.get(elem[0])
+    return count
 
 with open(filepath) as fp: 	
     input = fp.readline().strip().split(')')
@@ -20,26 +20,28 @@ with open(filepath) as fp:
         a = input[0]
         b = input[1]
 
-        elem = dict.get(a)
+        elem = graph.get(b)
 
         if elem == None:
-            dict[a] = []
-        dict.get(a).append(b)
+            graph[b] = []
+
+        graph.get(b).append(a)
 
         input = fp.readline().strip().split(')')
     #end while
     
-    #print(dict)
-    checkSum = 1
+    #print(graph)
+    checkSum = 0
 
     sum = 0
-    for e in dict:
-        sum += aux(e, dict)
-        #print(e)
+    for node in graph:
+        sum = aux(graph.get(node), graph)
+
+        #print(node +" - "+ str(aux(graph.get(node), graph)))
         #print(sum)
         checkSum += sum
     
-    #print(checkSum)
+    print(checkSum)
     
 
     

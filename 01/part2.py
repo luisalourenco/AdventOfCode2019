@@ -17,8 +17,4 @@ with open(filepath) as fp:
         mass = fp.readline().strip()
     #end while
 
-print sum
-#print (computeFuel(12))
-#print (computeFuel(14))
-#print (computeFuel(1969))
-#print (computeFuel(100756))
+print(sum)

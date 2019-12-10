@@ -1,23 +1,28 @@
 import math
 
-def countAsteroidsInLoS(xx, yy, map, vectors):
-    
+def countAsteroidsInLoS(xx, yy, map, angles):
+    angleList = []
     list = []
     for y in range(len(map)):
         for x in range(len(map[y])):
             if map[y][x] == '#':
                 vx = x - xx
-                vy = y - yy                                 
-                list.append(math.atan2(vx, vy))
+                vy = y - yy 
+                angle = math.atan2(vx, vy)
+       
+                elem = ((x,y), angle)    
+                angleList.append(elem)                             
+                
+                list.append(angle)
 
-    vectors[(xx,yy)] = list
+    angles[(xx,yy)] = list
     
     return len(set(list))
 
 
 
-
-filepath = 'input.txt' 
+station = (30, 34)
+filepath = 't.txt' 
 with open(filepath) as fp: 	
     line = fp.readline().strip()
     map = []
@@ -25,21 +30,22 @@ with open(filepath) as fp:
     while line:
         map.append(list(line))
         line = fp.readline().strip()
+
     #end while
     
-    #points dictionary
     dict = {} 
-    vectors = {} 
+    angles = {} 
 
     for y in range(len(map)):
         for x in range(len(map[y])):
             if map[y][x] == '#':
-                dict[(x,y)] = countAsteroidsInLoS(x, y, map, vectors)
+                dict[(x,y)] = countAsteroidsInLoS(x, y, map, angles)
 
     n = max(dict.values())
     print(n)
-    for a in dict:
-        if dict.get(a) == n:
-            print(a)
+
+    #print(dict)
+    #print(angles)
+    #visibleAsteroids = dict.get(station)
     
             

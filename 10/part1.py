@@ -1,31 +1,19 @@
 
 
-def countAsteroidsInLoS(xx, yy, map, size, width):
-    x = xx
-    y = yy
-    count = 0
-    asteroid = map[yy][xx]
-    left = map[yy][0:xx].count("#")
-    right = map[yy][xx:size].count("#")
+def countAsteroidsInLoS(xx, yy, map, vectors):
+    
+    list = []
+    for y in range(len(map)):
+        for x in range(len(map[y])):
+            if map[y][x] == '#':
+                vx = x - xx
+                vy = y - yy                   
+                list.append((vx, vy))
 
-    if left > 0:
-        count += 1
-    if right > 0:
-        count += 1
-
-
-    y = 0
-    #count upwards
-    for line in map:
-        #count left
-        left = map[y][0:xx].count("#")
-        right = map[y][xx:size].count("#")
-        count = count + left + right
-
-          
-        #end while x 
-        y += 1
-    return count
+    vectors[(xx,yy)] = list
+    print(len((list)))
+    print (vectors.get((xx,yy)))
+    return len(set(list))
 
 
 
@@ -34,37 +22,31 @@ filepath = 't.txt'
 with open(filepath) as fp: 	
     line = fp.readline().strip()
     map = []
-    size = 1
     
     while line:
         map.append(list(line))
         line = fp.readline().strip()
         width = len(list(line))
-        size += 1
     #end while
     
-    print(width)
+    #points dictionary
     dict = {} 
-    x = 0
-    y = 0
-    # move downards y+
-    for l in map:
-        # move right x+
-        for asteroid in l:
-            if asteroid == '#':
-                #print((x,y) )
-                
-                dict[(x,y)] = countAsteroidsInLoS(x, y, map, size, width)
-            x+= 1
-        #end for right
-        y+= 1
-        x = 0
-    #end for downards
-        
+    vectors = {} 
 
-    print(size)
-    
-    n = max(dict.values())
-    print(n)
+    # move downards y+
+    for y in range(len(map)):
+        # move right x+
+        for x in range(len(map[y])):
+            if map[y][x] == '#':
+                print((x,y) )
+                #dict[(x,y)] = countAsteroidsInLoS(x, y, map, vectors)
+
+        #end for right
+
+    #end for downards
+
+    print(countAsteroidsInLoS(6, 3, map, vectors))
+    #n = max(dict.values())
+    #print(n)
     
             

@@ -125,11 +125,11 @@ def moveForward(robot, direction):
     x = robot[0]
     y = robot[1]
     if direction == 'U':
-        return (x, y + 1)        
+        return (x, y - 1)        
     elif direction == 'R':
         return (x + 1, y)    
     elif direction == 'D':
-        return (x, y - 1)     
+        return (x, y + 1)     
     elif direction == 'L':
         return (x - 1, y)    
     
@@ -140,13 +140,13 @@ def IntCode(sequence, relative, inParam, robot, map):
     opCode = sequence[pc]
     moveNext = False
     direction = 'U'
-
+    
     while opCode != 99:  
         (opCode, a, b, res) = treatInput(pc, sequence, relative)
         
         x = robot[0]
         y = robot[1]
-            
+        
         if opCode == 1:
             #print("res pos: "+str(res))
             sequence[res] = add(a, b)
@@ -166,9 +166,12 @@ def IntCode(sequence, relative, inParam, robot, map):
                 x = robot[0]
                 y = robot[1]
                 inParam = (map[y][x])[0]
-                robot
+               
             else: #paint
-                map[y][x] = (a, '#')
+                if a == 0:
+                    map[y][x] = (a, '.')
+                else:
+                    map[y][x] = (a, '#')
                 moveNext = True            
             #print(a)
 
@@ -200,9 +203,9 @@ def IntCode(sequence, relative, inParam, robot, map):
 filepath = 'input.txt' 
 with open(filepath) as fp: 
     # 200 by 200 map
-    map = [ [ (0,'.') for i in range(200) ] for j in range(200) ] 
-   
-    robot = (100,100)
+    map = [ [ (0,'.') for i in range(100) ] for j in range(100) ] 
+
+    robot = (50,50)
 
     relative = 0	
     input = fp.readline().strip().split(',')    

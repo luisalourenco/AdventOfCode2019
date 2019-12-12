@@ -58,11 +58,38 @@ def moonMotions(moons, velocity, steps):
     
     return computeEnergy(moons, velocity)
 
+def getMoonKey(moons):
+    moonsCoords = ''    
+    for moon in moons:
+        moonsCoords = str(moon) + "-" + moonsCoords
+    return moonsCoords
+
+def getVelKey(velocity):
+    moonsVel = ''
+    for vel in velocity:
+        moonsVel = str(vel) + "-" + moonsVel
+    return moonsVel
+
+def moonMotionsWithState(moons, velocity, states):
+    steps = 0  
+    
+    while True:
+        applyGravity(moons, velocity)
+        applyVelocity(moons, velocity)
+        #print(states.get((getMoonKey(moons), getVelKey(velocity))) )
+        if states.get((getMoonKey(moons), getVelKey(velocity))) == None:
+            states[(getMoonKey(moons), getVelKey(velocity))] = steps
+        else:
+            break
+        steps +=1
+    return steps
 
 
+
+states = {}
 moons = []
 velocity = [(0,0,0)]*4
-filepath = 'input.txt' 
+filepath = 't2.txt' 
 with open(filepath) as fp: 	
     line = fp.readline().strip().split(',')
    
@@ -79,9 +106,10 @@ with open(filepath) as fp:
         line = fp.readline().strip().split(',')       
     #end while
 
-    energy = moonMotions(moons, velocity, 1000)
+    steps = moonMotionsWithState(moons, velocity, states)
+    print(steps)
     #print(moons)
     #print(energy)
-    print(sum(energy))
+    #print(sum(energy))
 
     

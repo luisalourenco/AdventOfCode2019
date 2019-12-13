@@ -1,4 +1,53 @@
 import math
+from math import gcd
+
+def LCM(arr, n): 
+      
+    # Find the maximum value in arr[] 
+    max_num = 0; 
+    for i in range(n): 
+        if (max_num < arr[i]): 
+            max_num = arr[i]; 
+  
+    # Initialize result 
+    res = 1; 
+  
+    # Find all factors that are present  
+    # in two or more array elements. 
+    x = 2; # Current factor. 
+    while (x <= max_num): 
+          
+        # To store indexes of all array 
+        # elements that are divisible by x. 
+        indexes = []; 
+        for j in range(n): 
+            if (arr[j] % x == 0): 
+                indexes.append(j); 
+  
+        # If there are 2 or more array  
+        # elements that are divisible by x. 
+        if (len(indexes) >= 2): 
+              
+            # Reduce all array elements  
+            # divisible by x. 
+            for j in range(len(indexes)): 
+                arr[indexes[j]] = int(arr[indexes[j]] / x); 
+  
+            res = res * x; 
+        else: 
+            x += 1; 
+  
+    # Then multiply all reduced  
+    # array elements 
+    for i in range(n): 
+        res = res * arr[i]; 
+  
+    return res; 
+def lcm(arr):
+    lcm = arr[0]
+    for i in arr[1:]:
+        lcm = lcm*i/gcd(lcm, i)
+    return lcm
 
 def applyGravity(moons, velocity):
     
@@ -58,38 +107,47 @@ def moonMotions(moons, velocity, steps):
     
     return computeEnergy(moons, velocity)
 
-def getMoonKey(moons):
+def getMoonKey(moons, i):
     moonsCoords = ''    
     for moon in moons:
-        moonsCoords = str(moon) + "-" + moonsCoords
+        moonsCoords = str(moon[i]) + "-" + moonsCoords
     return moonsCoords
 
-def getVelKey(velocity):
+def getVelKey(velocity, i):
     moonsVel = ''
     for vel in velocity:
-        moonsVel = str(vel) + "-" + moonsVel
+        moonsVel = str(vel[i]) + "-" + moonsVel
     return moonsVel
 
 def moonMotionsWithState(moons, velocity, states):
-    steps = 0  
-    
-    while True:
-        applyGravity(moons, velocity)
-        applyVelocity(moons, velocity)
+   
+    arr = []
+    for c in range(3):
+        steps = 0  
+        states = {}
+        while True:
         #print(states.get((getMoonKey(moons), getVelKey(velocity))) )
-        if states.get((getMoonKey(moons), getVelKey(velocity))) == None:
-            states[(getMoonKey(moons), getVelKey(velocity))] = steps
-        else:
-            break
-        steps +=1
-    return steps
+            key = getMoonKey(moons, c) + getVelKey(velocity, c)
+            print(key)
+            if states.get( key ) == None:
+                states[key] = steps
+            else:
+                arr.append(steps)
+                break
+
+            applyGravity(moons, velocity)
+            applyVelocity(moons, velocity)
+        
+        
+            steps +=1
+    return arr
 
 
 
 states = {}
 moons = []
 velocity = [(0,0,0)]*4
-filepath = 't2.txt' 
+filepath = 'input.txt' 
 with open(filepath) as fp: 	
     line = fp.readline().strip().split(',')
    
@@ -108,6 +166,8 @@ with open(filepath) as fp:
 
     steps = moonMotionsWithState(moons, velocity, states)
     print(steps)
+    print(LCM(steps, 3))
+    #print(lcm(steps))
     #print(moons)
     #print(energy)
     #print(sum(energy))

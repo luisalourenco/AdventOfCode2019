@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import random
 
 def add(a, b):
     return a + b
@@ -136,6 +137,20 @@ def moveForward(robot, direction):
         return (x - 1, y)    
     
 
+def getBallPosition(map):
+    for line in map:
+        for x in range(len(line)):
+            if line[x] == '.':
+                return x
+    return -1
+
+def getPaddlePosition(map):
+    for line in map:
+        for x in range(len(line)):
+            if line[x] == '_':
+                return x
+    return -1
+
 def IntCode(sequence, relative, inParam, map):
     # init positions
     pc = 0
@@ -147,7 +162,6 @@ def IntCode(sequence, relative, inParam, map):
     score = 0
     x = 0
     y = 0
-    joystick = -2
 
     while opCode != 99:  
         (opCode, a, b, res) = treatInput(pc, sequence, relative)
@@ -162,8 +176,18 @@ def IntCode(sequence, relative, inParam, map):
             
         #input
         elif opCode == 3:
-            sequence[a] = inParam
-            joystick =  a
+            printMap(map)
+            printMap(map,True)
+            ball = getBallPosition(map)
+            paddle = getPaddlePosition(map)
+            if ball < paddle:
+                inParam = -1
+            elif ball == paddle:
+                inParam = 0
+            elif ball > paddle:
+                inParam = 1
+            #inParam = int(input())
+            sequence[a] = inParam           
 
         elif opCode == 4:
             
@@ -189,12 +213,12 @@ def IntCode(sequence, relative, inParam, map):
 
                 if x == -1 and y == 0:
                     score = a
-                    print(id)
+                    print("Score: " + str(id))
                 else:
                     if id == 0:
                         map[y][x] = ' '
                     if id == 1:
-                        map[y][x] = '█'
+                        map[y][x] = '*'
                     #block
                     if id == 2:
                         map[y][x] = '#'
@@ -229,6 +253,24 @@ def IntCode(sequence, relative, inParam, map):
     
     return score
 
+
+def printMap(map, fileMode = False):
+    if fileMode:
+        file1 = open("MyFile.txt","a") 
+    
+        for l in map:
+            for j in range(len(l)):
+                file1.write(l[j])
+            file1.write("\n")
+        file1.close()
+    else:
+        for l in map:
+            for j in range(len(l)):
+                print(l[j], end = '')
+            print()
+
+
+
 filepath = 'input.txt' 
 with open(filepath) as fp: 
     # 200 by 200 map
@@ -236,24 +278,20 @@ with open(filepath) as fp:
 
 
     relative = 0	
-    input = fp.readline().strip().split(',')    
-    input = [int(i) for i in input]
-    input += [0]*300
+    myInput = fp.readline().strip().split(',')    
+    myInput = [int(i) for i in myInput]
+    myInput += [0]*300
 
     #quarters
-    input[0] = 2
+    myInput[0] = 2
 
-    score = IntCode(input, relative, 1, map)
+    maxScore = 0
+    score = IntCode(myInput, relative, 1, map)
+        
     print(score)
 
-    file1 = open("MyFile.txt","w") 
-    
-    ll = []
-    for l in map:
-        file1.write(str(l))
-        for j in l:
-            c = 0
-        file1.write("\n")
+    #printMap(map, True)
+    #printMap(map)
 
 
     #print(count)

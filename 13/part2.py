@@ -246,9 +246,15 @@ with open(filepath) as fp:
     score = IntCode(input, relative, 1, map)
     print(score)
 
-    #print(map)
-    count = 0
-    for line in map:
-        count += line.count('#')
+    file1 = open("MyFile.txt","w") 
+    
+    ll = []
+    for l in map:
+        file1.write(str(l))
+        for j in l:
+            c = 0
+        file1.write("\n")
+
+
     #print(count)
     

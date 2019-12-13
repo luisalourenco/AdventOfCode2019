@@ -180,6 +180,7 @@ def IntCode(sequence, relative, inParam, map):
             printMap(map,True)
             ball = getBallPosition(map)
             paddle = getPaddlePosition(map)
+            
             if ball < paddle:
                 inParam = -1
             elif ball == paddle:

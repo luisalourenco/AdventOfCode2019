@@ -1,16 +1,24 @@
+import time
 
-def convert(s): 
-  
+def timer(func):
+  def wrapper(*args, **kwargs):
+    start = time.time()
+    f = func(*args, **kwargs)
+    print(f'The function ran for {time.time() - start} s')
+    return f
+  return wrapper
+
+
+def convert(s):   
     # initialization of string to "" 
-    new = "" 
-  
+    new = ""   
     # traverse in the string  
     for x in s: 
-        new += x  
-  
+        new += x   
     # return string  
     return new 
 
+@timer
 def FFT(inputList, phase):
     base = [0, 1, 0, -1]
     size = len(inputList)
@@ -43,7 +51,7 @@ def FFT(inputList, phase):
         inputList = convert(result)
     #end for
 
-    return result
+    return convert(result)
 
 
 base = [0, 1, 0, -1]
@@ -54,9 +62,10 @@ t3 = str(19617804207202209144916044189917)
 filepath = 'input.txt' 
 with open(filepath) as fp: 	
     line = fp.readline().strip()
-    #result = FFT(t2, 100)
+    #result = FFT(test, 100)
     result = FFT(line, 100)
     
     #print(str(result))
-
-    print(str(result[0:8]))
+    res = str(result[0:8])
+    print(res)
+    

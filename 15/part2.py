@@ -181,7 +181,7 @@ def IntCode(sequence, relative, inParam, map):
             elif a == 2:
                 map[y][x] = '.'     
                 map[yy][xx] = 'O'
-                print( str(x) +", "+ str(y)  )
+                #print( str(x) +", "+ str(y)  )
                 break
             #print(a)
             
@@ -263,6 +263,25 @@ def find_all_paths(graph, start, end, path=[]):
         return paths
 
 
+def bfs(graph, start):
+    explored = []
+    queue = [start]
+    steps = 0
+    
+    while queue:
+        node = queue.pop(0)
+
+        if node not in explored:
+            explored.append(node)
+            neighbours = graph.get(node)
+
+            # add neighbours of node to queue
+            for neighbour in neighbours:
+                queue.append(neighbour)
+
+    return steps
+
+
 filepath = 'input.txt' 
 with open(filepath) as fp: 
     # 200 by 200 map
@@ -275,14 +294,22 @@ with open(filepath) as fp:
     myInput += [0]*300
     
     (map, steps) = IntCode(myInput, relative, 1, map)
-    #printMap(map)
-    print(steps)
-    print(41*41)
   
     graph = buildGraph(map)
-    paths = find_all_paths(graph, (21,21), (36,33))
-    
-    for path in paths:
-        print(len(path))
-    #print(score)
+    oxygen = (36,33)
+
+    steps = 0
+    for y in range(1, 40):
+        for x in range(1, 40):
+            s = find_all_paths(graph, (x,y), oxygen)
+            
+            for p in s:
+                #print(p)                
+                if len(p) > steps:
+                    steps = len(p)  
+
+
+    #print(neighbours)
+
+    print(steps)
 

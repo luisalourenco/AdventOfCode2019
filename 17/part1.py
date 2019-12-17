@@ -180,7 +180,8 @@ def IntCode(sequence, relative, inParam, map):
                 y += 1
                 x = 0           
             if a != 10 and a != 35 and a != 46:
-                map[y][x] = chr(a)         
+                map[y][x] = chr(a)
+                x += 1        
             
             print(a)
             

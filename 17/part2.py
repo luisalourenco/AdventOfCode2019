@@ -113,23 +113,7 @@ def treatInput(pc, sequence, relative):
         a =  sequence[pc + 1]
         a = getParameterValue(leftMode, a, sequence, relative, opCode == 3)
 
-        return (opCode, a, 0, 0)
-
-def moveForward(robot, direction):
-    x = robot[0]
-    y = robot[1]
-    # north
-    if direction == '1':
-        return (x, y - 1)
-    # east        
-    elif direction == '4':
-        return (x + 1, y)  
-    # south  
-    elif direction == '2':
-        return (x, y + 1)
-    # west     
-    elif direction == '3':
-        return (x - 1, y)    
+        return (opCode, a, 0, 0)  
     
 def pickDirection(map, x, y):
     # if unexplored, go!
@@ -151,7 +135,12 @@ def IntCode(sequence, relative, inParam, map):
     opCode = sequence[pc]
     x = 0
     y = 0
-
+    newline = False
+    finishedMain = False
+    finishedA = False
+    finishedB = False
+    finishedC = False
+    lastPhase = False
     while opCode != 99:         
 
         (opCode, a, b, res) = treatInput(pc, sequence, relative)        
@@ -167,29 +156,15 @@ def IntCode(sequence, relative, inParam, map):
             # max 20 chars
             # A 65, B 66, C, 67, D, 68
             # R 82, L 76
-            #A 44 A 44 B 44 C 44 B 44 C 44 B 44 C 10
-            #10 44 L 44 8 44 R 44 6 10
+            # A 44 A 44 B 44 C 44 B 44 C 44 B 44 C 10
+            # 10 44 L 44 8 44 R 44 6 10
             # y or n
-
-            #inParam = int(input())
-            #inParam = pickDirection(map, x, y)
-            sequence[a] = inParam           
+            
+            sequence[a] = ord(completeProgram.pop(0))
 
         elif opCode == 4:
-            #35 means #, 46 means ., 10 starts a new line           
-            if a == 35:
-                map[y][x] = '#'
-                x+= 1
-            if a == 46:
-                map[y][x] = '.'
-                x+= 1
-            if a == 10:
-                y += 1
-                x = 0           
-            if a != 10 and a != 35 and a != 46:
-                map[y][x] = chr(a)
-                x += 1
 
+ 
             print(a)
             
         elif opCode == 5:
@@ -227,83 +202,123 @@ def printMap(map, fileMode = True):
             file1.write("\n")
         file1.close() 
 
-def buildGraph(map):
-    graph = {}
-
-    for y in range(49):
-        for x in range(49):
-
-            if x < 50:
-                east = (x+1, y)
-            if x > 0:
-                west = (x-1, y)
-            if y > 0:
-                north = (x, y-1)
-            if y < 50:
-                south = (x, y+1)
-            
-            neighbours = []
-            if x < 50:
-                if map[east[1]][east[0]] == '#':
-                    neighbours.append(east)
-            if x > 0:
-                if map[west[1]][west[0]] == '#':
-                    neighbours.append(west)
-            if y > 0:
-                if map[north[1]][north[0]] == '#':
-                    neighbours.append(north)
-            if y < 50:
-                if map[south[1]][south[0]] == '#':
-                    neighbours.append(south)
-            
-            graph[(x,y)] = neighbours
-    return graph
-
-def find_all_paths(graph, start, end, path=[]):
-        path = path + [start]
-        if start == end:
-            return [path]
-        if graph[start] == None:
-            return []
-        paths = []
-        for node in graph[start]:
-            if node not in path:
-                newpaths = find_all_paths(graph, node, end, path)
-                for newpath in newpaths:
-                    paths.append(newpath)
-        return paths
-
-
-def bfs(graph, start):
-    explored = []
-    queue = [start]
-    steps = 0
-    
-    while queue:
-        node = queue.pop(0)
-
-        if node not in explored:
-            explored.append(node)
-            neighbours = graph.get(node)
-
-            # add neighbours of node to queue
-            for neighbour in neighbours:
-                queue.append(neighbour)
-
-    return explored
-
-
-
 def isIntersection(map, x, y):
     return map[y-1][x] == '#' and map[y + 1][x] == '#' and map[y][x -1] == '#' and map[y][x + 1] == '#'
 
-def findFirstScaffolding(map):
+def findRobot(map):
     for y in range(50):
         for x in range(50):
-            if map[y][x] == '#':
+            if map[y][x] == '^':
                 return (x,y)
 
+def moveForward(robot, direction):
+    x = robot[0]
+    y = robot[1]
+    # north
+    if direction == 'U':
+        return (x, y - 1)
+    # east        
+    elif direction == 'R':
+        return (x + 1, y)  
+    # south  
+    elif direction == 'D':
+        return (x, y + 1)
+    # west     
+    elif direction == 'L':
+        return (x - 1, y)
+
+def canMoveForward(robot, direction):
+    x = robot[0]
+    y = robot[1]
+    # north
+    if direction == 'U':
+        if y > 0:
+            return map[y - 1][x] == "#"
+        else:
+            return False    
+    # east        
+    if direction == 'R':
+        if x < 50:
+            return map[y][x + 1] == "#"
+        else:
+            return False
+    # south  
+    if direction == 'D':
+        if y < 50:
+            return map[y + 1][x] == "#"
+        else:
+            return False
+    # west     
+    if direction == 'L':
+        if x > 0:
+            return map[y][x - 1] == "#"
+        else:
+            return False
+
+# rotate always R first
+def rotatePosition(robot, direction):
+    
+    # up
+    if direction == 'U':
+        if canMoveForward(robot, 'R'):
+            return 'R', 'R'
+        elif canMoveForward(robot, 'L'):
+            return 'L', 'L'
+    # right        
+    if direction == 'R':
+        if canMoveForward(robot, 'D'):
+            return 'D', 'R'
+        elif canMoveForward(robot, 'U'):
+            return 'U', 'L'
+    # down  
+    if direction == 'D':
+        if canMoveForward(robot, 'R'):
+            return 'R', 'L'
+        elif canMoveForward(robot, 'L'):
+            return 'L', 'R'
+    # left     
+    if direction == 'L':
+        if canMoveForward(robot, 'D'):
+            return 'D', 'L'
+        elif canMoveForward(robot, 'U'):
+            return 'U', 'R'
+    return None, None
+
+def findPath(map):
+    (x,y) = findRobot(map)
+    pos = "U"
+    path = []
+    positions = 0
+    total = 0
+
+    while True :
+
+        canMove = canMoveForward((x,y), pos)
+        if canMove:
+            (xx, yy) = moveForward((x,y), pos)
+            positions += 1
+            total += 1    
+            x = xx
+            y = yy   
+        else:
+            path.append(str(positions))
+            positions = 0
+            pos, listPost = rotatePosition((x,y), pos)
+            if pos == None:
+                break
+            path.append(listPost)        
+        
+    return (map, path)
+
 filepath = 'input.txt' 
+
+mainProg = list('A,B,A,B,C,B,C,A,B,C\n')
+funA = list('R,4,R,10,R,8,R,4\n')
+funB = list('R,10,R,6,R,4\n')
+funC = list('R,4,L,12,R,6,L,12\n')
+
+completeProgram = mainProg + funA + funB + funC + list('n\n')
+
 with open(filepath) as fp: 
     # 200 by 200 map
     map = [ [ (' ') for i in range(50) ] for j in range(50) ] 
@@ -314,19 +329,22 @@ with open(filepath) as fp:
     myInput = [int(i) for i in myInput]
     myInput += [0]*10000
     
-    map = IntCode(myInput, relative, 1, map)
+    #map = IntCode(myInput, relative, 1, map)
     
     #map[0][10] = '#'
+
+    #(map, path) = findPath(map)
+    #printMap(map)
+    #print( ", ".join(path) )
+
+    #Main: A,B,A,B,C,B,C,A,B,C
+    #A: R,4,R,10,R,8,R,4
+    #B: R,10,R,6,R,4
+    #C: R,4,L,12,R,6,L,12
     
-    graph = buildGraph(map)
-    printMap(map)
-
-    start = findFirstScaffolding(map)
-    nodes = bfs(graph, (10,0))
-    print(nodes)
-
+    # ord
     myInput[0] = 2
-    #map = IntCode(myInput, relative, 1, map)
+    map = IntCode(myInput, relative, 1, map)
 
    
    

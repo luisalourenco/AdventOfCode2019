@@ -186,7 +186,10 @@ def IntCode(sequence, relative, inParam, map):
             if a == 10:
                 y += 1
                 x = 0           
-            
+            if a != 10 and a != 35 and a != 46:
+                map[y][x] = chr(a)
+                x += 1
+
             print(a)
             
         elif opCode == 5:
@@ -227,8 +230,8 @@ def printMap(map, fileMode = True):
 def buildGraph(map):
     graph = {}
 
-    for y in range(50):
-        for x in range(50):
+    for y in range(49):
+        for x in range(49):
 
             if x < 50:
                 east = (x+1, y)
@@ -240,14 +243,18 @@ def buildGraph(map):
                 south = (x, y+1)
             
             neighbours = []
-            if x < 50 and map[east[1]][east[0]] == '#':
-                neighbours.append(east)
-            if x > 0 and map[west[1]][west[0]] == '#':
-                neighbours.append(west)
-            if y > 0 and map[north[1]][north[0]] == '#':
-                neighbours.append(north)
-            if y < 50 and map[south[1]][south[0]] == '#':
-                neighbours.append(south)
+            if x < 50:
+                if map[east[1]][east[0]] == '#':
+                    neighbours.append(east)
+            if x > 0:
+                if map[west[1]][west[0]] == '#':
+                    neighbours.append(west)
+            if y > 0:
+                if map[north[1]][north[0]] == '#':
+                    neighbours.append(north)
+            if y < 50:
+                if map[south[1]][south[0]] == '#':
+                    neighbours.append(south)
             
             graph[(x,y)] = neighbours
     return graph
@@ -308,11 +315,14 @@ with open(filepath) as fp:
     myInput += [0]*10000
     
     map = IntCode(myInput, relative, 1, map)
+    
+    #map[0][10] = '#'
+    
     graph = buildGraph(map)
     printMap(map)
 
     start = findFirstScaffolding(map)
-    nodes = bfs(graph, start)
+    nodes = bfs(graph, (10,0))
     print(nodes)
 
     myInput[0] = 2

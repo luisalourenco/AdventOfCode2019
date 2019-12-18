@@ -247,5 +247,5 @@ with open(filepath) as fp:
     if len(sys.argv) == 2:
         debug = sys.argv[1]
     
-    result = part1_v2(map, debug)
+    result = part1(map, debug)
     #print(min(result))

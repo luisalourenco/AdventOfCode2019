@@ -1,5 +1,7 @@
 import time
 from collections import deque
+from itertools import permutations 
+from itertools import combinations
 
 def timer(func):
   def wrapper(*args, **kwargs):
@@ -104,7 +106,7 @@ def printMap(map, fileMode = True):
         file1.close() 
 
 def gatherLocations(map):
-    keys = {}
+    keys = []
     doors = {}
     entrance = None
     for j in range(100):
@@ -112,7 +114,8 @@ def gatherLocations(map):
             obj = map[j][i]
             if obj != '@':
                 if str.islower(obj):
-                    keys[obj] = (i,j)                    
+                    #keys[obj] = (i,j)                    
+                    keys.append((i,j))
                 elif str.isupper(obj):
                     doors[obj] = (i,j)
             else:
@@ -137,4 +140,17 @@ with open(filepath) as fp:
     keys, doors, entrance = gatherLocations(map)
     graph = buildGraph(map)
 
-    
+    print(len(keys))
+    l = permutations(keys)
+    start = entrance
+    result = []
+    for p in l:
+        sum = 0
+        start = entrance
+        for end in p:
+            path = find_shortest_path(graph, start, end)
+            if path != None:
+                sum += len(path)
+            start = end
+        result.append(sum)
+    print(min(result))

@@ -219,12 +219,54 @@ def printMap2(map, fileMode = True):
             file1.write("\n")
         file1.close() 
 
+@timer
+def part2(size):
+    # 1000, 150
+    offset = 1000
+    offsetY = offset + 150
+    for x in range(2*size):
+        for y in range(size):
+        
+            res = IntCode(myInput.copy(), relative, x+offset, y+offsetY, map)
+            mapFile.write(str(res))
+            map[y][x] = res
+        mapFile.write("\n")
+            
+    #print(map)
+    printMap2(map)
+
+    for x in range((2*size)-100):
+        for y in range(size-100):
+            onesY = sum(map[y:y+100][x])
+            
+            #print(onesY)
+            if onesY >= 100:
+                print("found Y with 100 at: ", str(x+offset) +", " + str(y+offsetY))
+                yy = y
+                shipFits = 0
+                while yy < y+100:
+                    onesX = sum(map[yy][x:x+100])
+                    #print("onesX: "+str(onesX))
+                    if onesX >= 100:
+                        shipFits+= 1
+                    yy+=1
+                print("res: " +str(shipFits))
+                print("==============")
+                if shipFits == 100:
+                    return (x+offset ,y+offsetY)
+    
+    return 0,0
+
+
+
 
 filepath = 'input.txt' 
 with open(filepath) as fp: 
+    size = 1000
+
     # 200 by 200 map
-    map = [ [ 0 for i in range(50) ] for j in range(50) ] 
-    mapFile = open("MyMap.txt","w") 
+    map = [ [ 0 for i in range(2*size) ] for j in range(size) ] 
+    mapFile = open("MyShipMap.txt","w") 
 
     relative = 0	
     myInput = fp.readline().strip().split(',')    
@@ -232,17 +274,11 @@ with open(filepath) as fp:
     myInput += [0]*10000
 
 
-
-    for x in range(50):
-        for y in range(50):
-        
-            res = IntCode(myInput.copy(), relative, x, y, map)
-            mapFile.write(str(res))
-            map[y][x] = res
-        mapFile.write("\n")
-            
-    print(map)
-    printMap2(map)
+    x,y = part2(size)
+    print(x)
+    print(y)
+    print(10000*x + y)
+    
 
 
 

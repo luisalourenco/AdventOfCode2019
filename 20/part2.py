@@ -1,4 +1,6 @@
 import time
+from collections import deque
+
 
 def timer(func):
   def wrapper(*args, **kwargs):
@@ -8,39 +10,32 @@ def timer(func):
     return f
   return wrapper
 
-def buildGraph(map, portals, ZZ = None):
+def buildGraph(map, portals, level, ZZ):
     graph = {}
     sizeX = len(map[0])
     sizeY = len(map)
 
-
     for y in range(1,sizeY-1):
         for x in range(1,sizeX-1):
 
-            east = (x+1, y)
-            west = (x-1, y)
-            north = (x, y-1)
-            south = (x, y+1)
+            east =  (x+1, y, level)
+            west =  (x-1, y, level)
+            north =  (x, y-1, level)
+            south =  (x, y+1, level)
             
             neighbours = []
-
-            # if (x,y) is an outer portal, then close "doors"
-            if (x,y) in portals.values() and not innerPortal((x,y), map):
-                neighbours = []
-            elif ZZ == (x,y):
-                neighbours = []
-            else:
-                if map[y][x] == '.':
-                    if map[east[1]][east[0]] == '.' and east != ZZ:
-                        neighbours.append(east)
-                    if map[west[1]][west[0]] == '.' and west != ZZ:
-                        neighbours.append(west)
-                    if map[north[1]][north[0]] == '.' and north != ZZ:
-                        neighbours.append(north)
-                    if map[south[1]][south[0]] == '.' and south != ZZ:
-                        neighbours.append(south)
+       
+            if map[y][x] == '.':
+                if map[east[1]][east[0]] == '.' :
+                    neighbours.append(east)
+                if map[west[1]][west[0]] == '.' :
+                    neighbours.append(west)
+                if map[north[1]][north[0]] == '.':
+                    neighbours.append(north)
+                if map[south[1]][south[0]] == '.': 
+                    neighbours.append(south)
             
-            graph[(x,y)] = neighbours
+            graph[(x,y, level)] = neighbours
     return graph
 
 def find_path(graph, start, end, path=[]):
@@ -85,6 +80,7 @@ def find_shortest_path(graph, start, end, path=[]):
                         shortest = newpath
         return shortest 
 
+
 def bfs(graph, start):
     explored = []
     queue = [start]
@@ -116,6 +112,8 @@ def find_shortest_path2(graph, start, end):
                     dist[next] = [dist[at], next]
                     q.append(next)
         return dist.get(end)
+
+
 
 def printGraph(graph, filter = True):
     for k in graph:
@@ -185,22 +183,7 @@ def findPortals(map):
 
     return portals
 
-def joinPortals(graph, portals):
-    for p in portals:
-        points = portals.get(p)
-        if len(points) == 2:
-            entry = graph.get(points[0])
-            entry.append(points[1])
-            graph[points[0]] = entry
-            
-            exit = graph.get(points[1])
-            exit.append(points[0])
-            graph[points[1]] = exit
-    return graph
-
-
-
-def innerPortal(portal, map):
+def outerPortal(portal, map):
     leftX = 2
     rightX = None
     topY = 2
@@ -220,11 +203,60 @@ def innerPortal(portal, map):
     return portal[0] == leftX or portal[0] == rightX or portal[1] == topY or portal[1] == bottomY
 
 
+def joinPortals(graphs, portals):
+    
+    maze = {}
+    for level in range(len(graphs)-1):
+        graph = graphs[level]
+        graphN = graphs[level+1]
+
+        for p in portals:
+            points = portals.get(p)
+            if len(points) == 2:   
+                x1,y1 = points[0] 
+                x2,y2 = points[1] 
+                
+                # x1, y1 inner portal
+                if not outerPortal(points[0], map):
+  
+                    # inner level -> outer level + 1
+                    entry = graph.get( (x1, y1, level) )
+                    entry.append( (x2 ,y2, level + 1 ))
+
+                    exit = graphN.get( (x2 , y2, level + 1 ) )
+                    exit.append( (x1, y1, level)  )
+
+                    graph[(x1 ,y1, level )] = entry
+                    graphN[(x2, y2, level + 1) ] = exit
+
+                else: # x2, y2 inner portal
+                      
+                    entry = graph.get( (x2 ,y2, level) )                    
+                    entry.append( (x1, y1, level+1 ))
+
+                    exit = graphN.get( (x1, y1, level+1 ) )
+                    exit.append( (x2 ,y2, level ) )                         
+        
+                    graph[(x2 ,y2, level )] = entry
+                    graphN[(x1, y1, level+1 )] = exit
+            #end if
+
+        maze[(x1, y1, level)] = graph[(x1, y1, level)]
+        maze[(x2, y2, level + 1)] = graphN[(x2, y2, level + 1)]
+    #end for
+    for g in graphs:
+        for key in g:
+            maze[key] = g.get(key)
+
+    return maze
+
+
+# failed idea :( over-engineering again
 def doMagic(graph, zeroGraph, AA, ZZ, portals, position, level):
 
-
+    result = []
     paths = {}
-    for i in range(400):
+    for i in range(1000):
 
         # find reachable points from position
         if level == 0:
@@ -236,17 +268,20 @@ def doMagic(graph, zeroGraph, AA, ZZ, portals, position, level):
         for portal in explored:           
             isPortal = any(portal in val for val in portals.values())
             
-            if isPortal:                
+            if isPortal and position != portal:                
                 # if we're at level 0, check if we have a path to ZZ
                 if level == 0:
                     path = find_shortest_path(zeroGraph, position, ZZ)
                     if path != None:
                         l = paths.get(position)
                         paths[position] = []
-                        paths[portal] = l + path
-                        
-                        return len(l+path)
+                        #paths[portal] = l + path
+                        print("RES: "+ str(len(l+path)))
+                        result.append(l + path)
+                        break
+                        #return len(l+path)
 
+                print("start: " + str(position) + ", end: " + str(portal))
                 print("LEVEL: " + str(level))
                 path = find_shortest_path(graph, position, portal)
                 
@@ -270,24 +305,37 @@ def doMagic(graph, zeroGraph, AA, ZZ, portals, position, level):
             #end isPortal
         #end for    
     return paths
-        
+ 
+
+import sys
+sys.setrecursionlimit(10000)
 
 @timer
-def part2(map, debug = True):
+def part2(map, debug = False):
     level = 0
     portals = findPortals(map)
     AA = portals.get("AA")[0]
     ZZ = portals.get("ZZ")[0]
+    
+    graphs=[]
+    for i in range(50):
+        # inner levels graph 
+        graph = buildGraph(map, portals, i, ZZ)  
+        graphs.append(graph) 
 
-    # zero level graph
-    zeroGraph = buildGraph(map, portals)
+    mazeGraph = joinPortals(graphs, portals)  
+    start = (AA[0], AA[1], 0)
+    end = (ZZ[0], ZZ[1], 0)
     
-    # inner levels graph 
-    graph = buildGraph(map, portals, ZZ)
-    graph = joinPortals(graph, portals)    
+    path = find_shortest_path2(mazeGraph, start, end)
+    if path != None:
+        path = [j for i in path for j in i]
+        print(path)
+        print(len(path)-1)
+    else:
+        print("No path found!")
     
-    paths = doMagic(graph, zeroGraph, AA, ZZ, portals, AA, level)
-    #print(paths)
+   
     
     if debug:
         printMap(map)
@@ -296,25 +344,16 @@ def part2(map, debug = True):
             n = portals.get(portal)
             if len(n) == 2:
                 print(str(portal) + " => " + str(portals.get(portal)))
-                print(innerPortal(n[0], map))
-                print(innerPortal(n[1], map))
+                print("outer: "+ str(outerPortal(n[0], map)))
+                print("outer: " +str(outerPortal(n[1], map)))
         
         printGraph(zeroGraph)   
         #printGraph(graph)   
     
-    #print(str(i) + " iterations.")
-    #remove starting point
     
-    #if path != None:
-    #    path.pop(0)  
-    #    print(len(path))
-    #else:
-    #    print("There is no path to ZZ!")
-
     
 
-
-filepath = 't3.txt' 
+filepath = 'input.txt' 
 with open(filepath) as fp: 	
     line = fp.readline()
     map = [ [ ' ' for i in range(120) ] for j in range(120) ] 

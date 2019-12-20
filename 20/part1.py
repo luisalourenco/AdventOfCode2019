@@ -23,14 +23,15 @@ def buildGraph(map):
             south = (x, y+1)
             
             neighbours = []
-            if map[y][x] != ' ' and map[y][x] != '#':
-                if map[east[1]][east[0]] != ' ' and map[east[1]][east[0]] != '#':
+            #if map[y][x] != ' ' and map[y][x] != '#':
+            if map[y][x] == '.':
+                if map[east[1]][east[0]] == '.':
                     neighbours.append(east)
-                if map[west[1]][west[0]] != ' ' and map[west[1]][west[0]] != '#':
+                if map[west[1]][west[0]] == '.':
                     neighbours.append(west)
-                if map[north[1]][north[0]] != ' ' and map[north[1]][north[0]] != '#':
+                if map[north[1]][north[0]] == '.':
                     neighbours.append(north)
-                if map[south[1]][south[0]] != ' ' and map[south[1]][south[0]] != '#':
+                if map[south[1]][south[0]] == '.':
                     neighbours.append(south)
             
             graph[(x,y)] = neighbours
@@ -110,15 +111,14 @@ def find_shortest_path2(graph, start, end):
                     q.append(next)
         return dist.get(end)
 
-
-
-def printGraph(graph):
+def printGraph(graph, filter = True):
     for k in graph:
         nodes = graph.get(k)
         if nodes != None:
-            print(str(k) + " => " + str(nodes))
+            if nodes != [] and filter:
+                print(str(k) + " => " + str(nodes))
 
-def printMap(map, fileMode = True):
+def printMap(map, fileMode = False):
     if fileMode:
         file1 = open("MyFileAll.txt","w") 
     
@@ -127,6 +127,9 @@ def printMap(map, fileMode = True):
                 file1.write(l[j])
             file1.write("\n")
         file1.close() 
+    else:
+        for l in map:
+            print("".join(l))
 
 def findPortalPosition(map, i, j, isFwd):
     if isFwd:
@@ -142,12 +145,17 @@ def findPortalPosition(map, i, j, isFwd):
 
 def findPortals(map):
     portals = {}
-    size = 20
+    size = 120
+    
     for j in range(size-1):
         for i in range(size-1):
+            
+            fwd = str(map[j][i]).strip()
+            fwd = fwd + str(map[j][i+1]).strip()
 
-            fwd = str(map[j][i:i+1]).strip()
-            dwn = str(map[j:j+1][i]).strip()
+            dwn = str(map[j][i]).strip()
+            dwn = dwn + str(map[j+1][i]).strip()
+
             skip = True
 
             # scenario letters are in horizontal
@@ -161,6 +169,7 @@ def findPortals(map):
                 skip = False
             
             if not skip:
+                #print("fwd: "+ str(fwd) + ", dwn: " +str(dwn))
                 coords = portals.get(key)
                 if coords == None:                    
                     portals[key] = [pos]
@@ -170,26 +179,53 @@ def findPortals(map):
 
     return portals
 
-@timer
-def part1(map):
-    portals = findPortals(map)
-    print(portals)
+def joinPortals(graph, portals):
+    for p in portals:
+        points = portals.get(p)
+        if len(points) == 2:
+            entry = graph.get(points[0])
+            entry.append(points[1])
+            graph[points[0]] = entry
+            
+            exit = graph.get(points[1])
+            exit.append(points[0])
+            graph[points[1]] = exit
+    return graph
 
+@timer
+def part1(map, debug = True):
+    portals = findPortals(map)
+    graph = buildGraph(map)
+    graph = joinPortals(graph, portals)
+    AA = portals.get("AA")[0]
+    ZZ = portals.get("ZZ")[0]
+    path = find_shortest_path(graph, AA, ZZ)
+    #remove starting point
+    if path != None:
+        path.pop(0)
+    print(len(path))
+
+    if debug:
+        printMap(map)
+        print(portals)
+        printGraph(graph)
+    
+
+    
     return 0
 
 
-filepath = 't.txt' 
+filepath = 'input.txt' 
 with open(filepath) as fp: 	
     line = fp.readline()
-    size = len(line)
-    map = [ [ ' ' for i in range(20) ] for j in range(20) ] 
+    map = [ [ ' ' for i in range(120) ] for j in range(120) ] 
 
     j = 0
     while line:
-        map[j]= line[:len(line)-1]
+        size = len(line) - 1
+        for i in range(size):
+            map[j][i] = line[i]
         j += 1
         line = fp.readline()
     #end while
-    #print(map)
-    printMap(map)
-    part1(map)
+    part1(map, False)

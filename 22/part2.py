@@ -76,6 +76,22 @@ def part1(steps):
         if deck[i] == 2019:
             print(i)
 
+def shuffeOptimizeD(deck, step, debug = True):
+    # cut
+    op = step[0]
+    n = step[1]
+    # pos+ = (pos - n) % #C
+    if op == 'CUT':
+        n = int(n)
+        deck = cut(deck, n)
+    # pos = (pos * n) % #C
+    elif op == 'INC':
+        n = int(n)
+        deck = increment(deck, n)
+    # pos =  #C - pos - 1 
+    elif op == 'NEW':
+        deck = dealNewStack(deck)
+    return deck
 
 @timer
 def part2(fp):
@@ -90,7 +106,6 @@ def part2(fp):
 
 
 
-
 filepath = 'input.txt' 
 with open(filepath) as fp: 	
     steps = []
@@ -100,6 +115,6 @@ with open(filepath) as fp:
         line = fp.readline().strip().split(' ')
     #end while
     
-    part1(steps)
+    #part1(steps)
     
     

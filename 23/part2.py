@@ -146,7 +146,7 @@ def wait(sequence, a, inParam, pc, comp):
     print("switching computer for "+ str(comp))
     return (pc+2, sequence)
 
-def IntCode(sequence, relative, inParam, queues, states, nat, idle, init = False):
+def IntCode(sequence, relative, inParam, queues, states, nat, idleVal, idle, init = False):
     # init positions
     comp = inParam
 
@@ -181,6 +181,10 @@ def IntCode(sequence, relative, inParam, queues, states, nat, idle, init = False
             if not init:
                 # read queue for this computer
                 queue = queues.get(comp)
+                if idle and comp == 0:
+                    print("setting idle value for " + str(comp)+ ": "+str(idleVal))
+                    queue = [idleVal]
+                    idle = False
 
                 if len(queue) == 0:
                     if sent >= 30:
@@ -188,8 +192,6 @@ def IntCode(sequence, relative, inParam, queues, states, nat, idle, init = False
                         print("[" + str(comp)+"] Switching computer")
                         print("================")
                         return (pc+2, sequence)
-                    if idle and comp == 0:
-                        inParam = inParam
                     else:
                         inParam = -1
                     sent +=1
@@ -237,13 +239,16 @@ def IntCode(sequence, relative, inParam, queues, states, nat, idle, init = False
                 if dst == 255:
                     print("YYYY: "+ str(y))
 
-                    if (x,y) in nat and idle: #repeating 255
-                        return (pc+2, sequence)
+                    #if (x,y) in nat and idle: #repeating 255
+                    #    return (pc+2, sequence)
                     nat.add((x,y))
 
-                q = queues.get(dst)             
-               
-                q.append((x,y))
+                q = queues.get(dst) 
+
+                if dst == 255: # only save last one
+                    q = [(x,y)]          
+                else:
+                    q.append((x,y))
                 queues[dst] = q
                 
                 print("PACKET SENT! ")
@@ -311,6 +316,7 @@ filepath = 'input.txt'
 with open(filepath) as fp: 
     queues = {}
     states = {}
+    oldStates = {}
     size = 50
     nat = set()
     idleMachines = {}
@@ -329,27 +335,37 @@ with open(filepath) as fp:
     idle = False
     # bootstrap
     for addr in range(50):
-        res, seq = IntCode(myInput.copy(), relative, addr, queues, states, nat, idle, True)
+        res, seq = IntCode(myInput.copy(), relative, addr, queues, states, nat, None, idle, True)
         states[addr] = (res, seq)
 
     exit = False    
     # run network
-    for i in range(100):
+    inParam = -1
+    for i in range(500):
         if exit:
             break
+
         if sum(idleMachines.values()) == 50:
             if len(queues.get(255)) != 0:
-                inParam = queues.get(255)[0]
+                inParam = queues.get(255).pop(0)
+                
+                print("all machines idle!")               
+                print(inParam)
                 idle = True
 
         for addr in range(50):
-            res, seq = IntCode(myInput.copy(), relative, addr, queues, states, nat, idle)  
-            idle = False          
-            oldState = states.get(addr)
+            oldStates[addr] = states.get(addr)
+            res, seq = IntCode(myInput.copy(), relative, addr, queues, states, nat, inParam, idle)  
+            idle = False
+            oldState = oldStates.get(addr)
+            
+            
             if oldState == (res, seq):
+                print("idle: " +str(addr))
                 idleMachines[addr] = 1
             else:
                 idleMachines[addr] = 0
+
             states[addr] = (res, seq)
 
             queue = queues.get(255)

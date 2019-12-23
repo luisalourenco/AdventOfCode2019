@@ -1,6 +1,6 @@
 import time
 import random
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 
 def timer(func):
   def wrapper(*args, **kwargs):
@@ -141,7 +141,7 @@ def pickDirection(map, x, y):
 
     return random.randint(1,4)
 
-def IntCode(sequence, relative, inParam, map, computers):
+def IntCode(sequence, relative, inParam, map):
     # init positions
     pc = 0
     opCode = sequence[pc]
@@ -167,15 +167,15 @@ def IntCode(sequence, relative, inParam, map, computers):
         #input
         elif opCode == 3:    
 
-            print(computers)        
+            #print(computers)        
             if not init:
                 # read queue for this computer
                 queue = computers.get(comp)
-                if queue == None or len(queue) == 0:
+                if queue.empty():
                     inParam = -1
                 else:
                     if readX == None:
-                        packet = queue.pop(0)
+                        packet = queue.get()
                         inParam = packet[0]
                         readY = packet[1]
                         readX = packet[0]
@@ -206,31 +206,23 @@ def IntCode(sequence, relative, inParam, map, computers):
                 y = a
                 
                 if dst == 255:
-                    print("Y: "+ str(y))
+                    print("YYYY: "+ str(y))
+                    return a
 
                 q = computers.get(dst)              
+               
+                q.put((x,y))
+                computers[dst] = q
 
-                if q == None:
-                    computers[dst] = [(x,y)]
+                print("PACKET SENT! ")
+                print("Queue: "+str(dst))
+                print("X: "+str(x))
+                print("Y: "+str(y))
+                print("=====")
 
-                    print("PACKET SENT FROM " + str(comp))
-                    print("Queue: "+str(dst))
-                    print("X: "+str(x))
-                    print("Y: "+str(y))
-                    print("=====")
-                else: 
-                    q.append((x,y))
-                    computers[dst] = q
-
-                    print("PACKET SENT! ")
-                    print("Queue: "+str(dst))
-                    print("X: "+str(x))
-                    print("Y: "+str(y))
-                    print("=====")
-
-                    dst = None
-                    x = None
-                    y = None
+                dst = None
+                x = None
+                y = None
                 
 
             #print("COMP: " + str(comp) + ", out: "+ str(a))
@@ -285,7 +277,12 @@ def printMap2(map, fileMode = True):
 
 filepath = 'input.txt' 
 with open(filepath) as fp: 
+    global computers
     computers = {}
+    for i in range(50):
+        computers[i] =  Queue()
+
+
     size = 50
     # 200 by 200 map
     map = [ [ 0 for i in range(size) ] for j in range(size) ] 
@@ -298,9 +295,11 @@ with open(filepath) as fp:
 
 
     for addr in range(50):
-        p = Process(target=IntCode, args =[myInput.copy(), relative, addr, map, computers] ) 
+        p = Process(target=IntCode, args =[myInput.copy(), relative, addr, map] ) 
         #res = IntCode(myInput.copy(), relative, addr, map, computers)
         p.start()
+        p.join()
+        p.terminate()
         #print(res)
 
     

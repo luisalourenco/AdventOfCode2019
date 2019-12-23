@@ -146,7 +146,7 @@ def wait(sequence, a, inParam, pc, comp):
     print("switching computer for "+ str(comp))
     return (pc+2, sequence)
 
-def IntCode(sequence, relative, inParam, map, computers, init = False):
+def IntCode(sequence, relative, inParam, map, computers, states, init = False):
     # init positions
     comp = inParam
 
@@ -185,8 +185,9 @@ def IntCode(sequence, relative, inParam, map, computers, init = False):
                 if len(queue) == 0:
                     if sent >= 100:
                         sequence[a] = inParam 
-                        print("switching computer for "+ str(comp))
-                        return (pc+2, sequence, computers)
+                        print("[" + str(comp)+"] Switching computer")
+                        print("================")
+                        return (pc+2, sequence)
                     inParam = -1
                     sent +=1
                 else:
@@ -217,7 +218,7 @@ def IntCode(sequence, relative, inParam, map, computers, init = False):
                 print("bootstrap ended for "+ str(comp))
 
                 # return current state
-                return (pc+2, sequence, computers)
+                return (pc+2, sequence)
 
             sequence[a] = inParam 
 
@@ -232,7 +233,7 @@ def IntCode(sequence, relative, inParam, map, computers, init = False):
                 
                 if dst == 255:
                     print("YYYY: "+ str(y))
-                    return (255, [], computers)
+                    return (255, [])
 
                 q = computers.get(dst)              
                
@@ -302,9 +303,7 @@ def printMap2(map, fileMode = True):
 
 filepath = 'input.txt' 
 with open(filepath) as fp: 
-    global computers
     computers = {}
-    global states
     states = {}
    
 
@@ -325,16 +324,18 @@ with open(filepath) as fp:
     #print("Queues list:" + str(computers))
 
     for addr in range(50):
-        res, seq, c = IntCode(myInput.copy(), relative, addr, map, computers, True)
+        res, seq = IntCode(myInput.copy(), relative, addr, map, computers, states, True)
         states[addr] = (res, seq, computers)
 
     #while True:
     for i in range(100):
+        if res == 255:
+            break
         for addr in range(50):
-            res, seq, c = IntCode(myInput.copy(), relative, addr, map, computers)            
+            res, seq = IntCode(myInput.copy(), relative, addr, map, computers, states)            
+            states[addr] = (res, seq, computers)
             if res == 255:
                 break
-            computers = c
     #print(computers)
     
     

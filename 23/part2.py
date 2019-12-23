@@ -341,14 +341,13 @@ with open(filepath) as fp:
     exit = False    
     # run network
     inParam = -1
+    idlesTimes = 0
     for i in range(500):
         if exit:
             break
 
         if sum(idleMachines.values()) == 50:
-            if len(queues.get(255)) != 0:
                 inParam = queues.get(255).pop(0)
-                
                 print("all machines idle!")               
                 print(inParam)
                 idle = True

@@ -106,7 +106,7 @@ def treatInput(pc, sequence, relative):
 
         return (opCode, a, b, res)
     if opCode == 3 or opCode == 4:       
-        a =  sequence[pc + 1]
+        a = sequence[pc + 1]
         a = getParameterValue(leftMode, a, sequence, relative, opCode == 3)
 
         return (opCode, a, 0, 0)
@@ -141,19 +141,29 @@ def pickDirection(map, x, y):
 
     return random.randint(1,4)
 
-def IntCode(sequence, relative, inParam, map):
+def wait(sequence, a, inParam, pc, comp):
+    sequence[a] = inParam 
+    print("switching computer for "+ str(comp))
+    return (pc+2, sequence)
+
+def IntCode(sequence, relative, inParam, queues, states, init = False):
     # init positions
-    pc = 0
-    opCode = sequence[pc]
     comp = inParam
+
+    #obtain state
+    pc = states.get(comp)[0]
+    sequence = states.get(comp)[1]
+    print("[" + str(comp)+"] PC: " +str(pc))
+
+    opCode = sequence[pc]
+    
     x = None
     y = None
 
     dst = None
     readX = None
     readY = None
-    #print("(" +str(x) +", "+ str(y)+ ")")
-    init = True
+    sent= 0
     while opCode != 99:         
         
         (opCode, a, b, res) = treatInput(pc, sequence, relative)        
@@ -167,59 +177,78 @@ def IntCode(sequence, relative, inParam, map):
         #input
         elif opCode == 3:    
 
-            #print(computers)        
             if not init:
                 # read queue for this computer
-                queue = computers.get(comp)
-                if queue.empty():
+                queue = queues.get(comp)
+
+                if len(queue) == 0:
+                    if sent >= 100:
+                        sequence[a] = inParam 
+                        print("[" + str(comp)+"] Switching computer")
+                        print("================")
+                        return (pc+2, sequence)
                     inParam = -1
+                    sent +=1
                 else:
-                    if readX == None:
-                        packet = queue.get()
+
+                    if readX == None: # read X
+                        packet = queue[0]
                         inParam = packet[0]
                         readY = packet[1]
-                        readX = packet[0]
-                    else:
+                        readX = packet[0]                        
+                    else: # read Y, remove packet from queue
                         print("PACKET RECEIVED! ")
                         print("Queue: "+str(comp))
                         print("X: "+str(readX))
                         print("Y: "+str(readY))
                         print("=====")
+                        queue.pop(0)
                         inParam = readY
                         readX = None
             
             else:
                 print("booting: "+str(inParam))
+                # init computer with its address
                 comp = inParam
-                init = False
+                # bootstrap
+                sequence[a] = inParam 
+                # sinalise the bootstrap is completed
+                init = False                
+                print("bootstrap ended for "+ str(comp))
+
+                # return current state
+                return (pc+2, sequence)
 
             sequence[a] = inParam 
 
         elif opCode == 4:
 
-
             if dst == None:
                 dst = a
             elif x == None:
                 x = a
-            elif y == None:
+            elif y == None: 
                 y = a
                 
                 if dst == 255:
                     print("YYYY: "+ str(y))
-                    return a
+                    #return (255, [])
+                    q = queues.get(dst)              
+                    q.append((x,y))
+                    queues[dst] = q
+                    return (pc+2, sequence)
 
-                q = computers.get(dst)              
+                q = queues.get(dst)              
                
-                q.put((x,y))
-                computers[dst] = q
-
+                q.append((x,y))
+                queues[dst] = q
+                
                 print("PACKET SENT! ")
                 print("Queue: "+str(dst))
                 print("X: "+str(x))
                 print("Y: "+str(y))
                 print("=====")
-
+                sent += 1
                 dst = None
                 x = None
                 y = None
@@ -277,29 +306,39 @@ def printMap2(map, fileMode = True):
 
 filepath = 'input.txt' 
 with open(filepath) as fp: 
-    global computers
-    computers = {}
-    for i in range(50):
-        computers[i] =  Queue()
-
-
+    queues = {}
+    states = {}
     size = 50
-    # 200 by 200 map
-    map = [ [ 0 for i in range(size) ] for j in range(size) ] 
-    mapFile = open("MyMap.txt","w") 
 
     relative = 0	
     myInput = fp.readline().strip().split(',')    
     myInput = [int(i) for i in myInput]
     myInput += [0]*10000
 
-
+    for i in range(50):
+        states[i] = (0, myInput.copy())
+        queues[i] =  []      
+    queues[255] =  []
+    
+    # bootstrap
     for addr in range(50):
-        p = Process(target=IntCode, args =[myInput.copy(), relative, addr, map] ) 
-        #res = IntCode(myInput.copy(), relative, addr, map, computers)
-        p.start()
-        p.join()
-        p.terminate()
-        #print(res)
+        res, seq = IntCode(myInput.copy(), relative, addr, queues, states, True)
+        states[addr] = (res, seq)
 
+    exit = False
+    # run network
+    for i in range(100):
+        if exit:
+            break
+        for addr in range(50):
+            res, seq = IntCode(myInput.copy(), relative, addr, queues, states)            
+            states[addr] = (res, seq)
+
+            if len(queues.get(255)) != 0:
+                exit = True
+                break
+    #print(queues)
+    
+    
+      
     

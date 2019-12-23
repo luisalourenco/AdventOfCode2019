@@ -146,7 +146,7 @@ def wait(sequence, a, inParam, pc, comp):
     print("switching computer for "+ str(comp))
     return (pc+2, sequence)
 
-def IntCode(sequence, relative, inParam, map, computers, states, init = False):
+def IntCode(sequence, relative, inParam, queues, states, init = False):
     # init positions
     comp = inParam
 
@@ -163,7 +163,6 @@ def IntCode(sequence, relative, inParam, map, computers, states, init = False):
     dst = None
     readX = None
     readY = None
-    #print("(" +str(x) +", "+ str(y)+ ")")
     sent= 0
     while opCode != 99:         
         
@@ -180,7 +179,7 @@ def IntCode(sequence, relative, inParam, map, computers, states, init = False):
 
             if not init:
                 # read queue for this computer
-                queue = computers.get(comp)
+                queue = queues.get(comp)
 
                 if len(queue) == 0:
                     if sent >= 100:
@@ -233,12 +232,16 @@ def IntCode(sequence, relative, inParam, map, computers, states, init = False):
                 
                 if dst == 255:
                     print("YYYY: "+ str(y))
-                    return (255, [])
+                    #return (255, [])
+                    q = queues.get(dst)              
+                    q.append((x,y))
+                    queues[dst] = q
+                    return (pc+2, sequence)
 
-                q = computers.get(dst)              
+                q = queues.get(dst)              
                
                 q.append((x,y))
-                computers[dst] = q
+                queues[dst] = q
                 
                 print("PACKET SENT! ")
                 print("Queue: "+str(dst))
@@ -303,14 +306,9 @@ def printMap2(map, fileMode = True):
 
 filepath = 'input.txt' 
 with open(filepath) as fp: 
-    computers = {}
+    queues = {}
     states = {}
-   
-
     size = 50
-    # 200 by 200 map
-    map = [ [ 0 for i in range(size) ] for j in range(size) ] 
-    mapFile = open("MyMap.txt","w") 
 
     relative = 0	
     myInput = fp.readline().strip().split(',')    
@@ -319,24 +317,27 @@ with open(filepath) as fp:
 
     for i in range(50):
         states[i] = (0, myInput.copy())
-        computers[i] =  []      
+        queues[i] =  []      
+    queues[255] =  []
     
-    #print("Queues list:" + str(computers))
-
+    # bootstrap
     for addr in range(50):
-        res, seq = IntCode(myInput.copy(), relative, addr, map, computers, states, True)
-        states[addr] = (res, seq, computers)
+        res, seq = IntCode(myInput.copy(), relative, addr, queues, states, True)
+        states[addr] = (res, seq)
 
-    #while True:
+    exit = False
+    # run network
     for i in range(100):
-        if res == 255:
+        if exit:
             break
         for addr in range(50):
-            res, seq = IntCode(myInput.copy(), relative, addr, map, computers, states)            
-            states[addr] = (res, seq, computers)
-            if res == 255:
+            res, seq = IntCode(myInput.copy(), relative, addr, queues, states)            
+            states[addr] = (res, seq)
+
+            if len(queues.get(255)) != 0:
+                exit = True
                 break
-    #print(computers)
+    #print(queues)
     
     
       

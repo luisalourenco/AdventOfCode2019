@@ -13,16 +13,17 @@ def timer(func):
   return wrapper
 
 
-def printMap(map, rating = None, fileMode = True):
+def printMap(map, level = None, fileMode = True):
     if fileMode:
         file1 = open("MyFileAll.txt","a") 
     
+        if level != None:
+            file1.write("Level #"+str(level))
+        file1.write("\n")
         for l in map:
             for j in range(len(l)):
                 file1.write(l[j])
             file1.write("\n")
-        if rating != None:
-            file1.write("rating "+str(rating))
         file1.write("\n")
         file1.write("\n")
         file1.close() 
@@ -37,12 +38,52 @@ def bugsInAdjacentTiles(map, x, y, levels, level):
     # -1, -1 - right border
     # -2, -2 - left border
 
-    # implement borders logic    
+    # implement borders logic above
+    if x == -1 and y == 0:
+        for i in range(5):
+            if map[4][i] == '#':
+                bugs += 1
+    if x == 0 and y == -1:
+        for i in range(5):
+            if map[0][i] == '#':
+                    bugs += 1
+    if x == -1 and y == -1:
+        for i in range(5):
+            if map[i][4] == '#':
+                bugs += 1
+    if x == -2 and y == -2:
+        for i in range(5):
+            if map[i][0] == '#':
+                bugs += 1
 
+    # if this is true then we are analysing a lower level and do not need to check the normal conditions
+    if x <= 0 and y <= 0 and y != x:
+        return bugs
 
-    # implement upper level logic
-    # if x = 0 or x = 5, go up and down
-    # if y = 0 or y = 5, 
+    topMap = levels.get(level + 1)
+    if topMap != None:
+        lefTop = topMap[2][1]
+        rightTop = topMap[2][3]
+        top = topMap[1][2]
+        bot = topMap[3][2]
+        # implement upper level logic
+        # if x = 0, compare with x,y? LeftTop
+        # or x = 5,  ?x,y rightTop
+        # if y = 0, ? top x,y Top
+        # or y = 5 x,y ? bot Bot
+        if x == 0:
+            if lefTop == '#':
+                bugs += 1
+        if y == 0:
+            if top == '#':
+                bugs += 1
+        if x == 4:
+            if rightTop == '#':
+                bugs += 1
+        if y == 4:
+            if bot == '#':
+                bugs += 1
+
     if y != 0:
         if map[y-1][x] == '#': 
             bugs += 1
@@ -50,13 +91,16 @@ def bugsInAdjacentTiles(map, x, y, levels, level):
             lowerLevel = levels.get(level-1)
             # search lower level in lower border
             bugs += bugsInAdjacentTiles(lowerLevel, -1, 0, levels, level -1)
+    
     if y != size -1:
         if map[y + 1][x] == '#':
             bugs += 1
         elif map[y + 1][x] == '?':
             lowerLevel = levels.get(level-1)
+           
             # search lower level in upper border
             bugs += bugsInAdjacentTiles(lowerLevel, 0, -1, levels, level -1)
+    
     if x != 0:
         if map[y][x - 1] == '#':
             bugs += 1
@@ -64,6 +108,7 @@ def bugsInAdjacentTiles(map, x, y, levels, level):
             lowerLevel = levels.get(level-1)
             # search lower level in right border
             bugs += bugsInAdjacentTiles(lowerLevel, -1, -1, levels, level -1)
+    
     if x != size -1:
         if map[y][x + 1] == '#':
             bugs += 1
@@ -75,13 +120,14 @@ def bugsInAdjacentTiles(map, x, y, levels, level):
 
 
 def mutation(levels):
-    newMap = [ [ '.' for i in range(5) ] for j in range(5) ]
     size = 5
-    level = 0
+    #level = 0
     newLevels = {}
 
-    for map in range(len(levels.keys())):
-
+    for level in range(-10, 10):
+        map = levels.get(level)
+        newMap = [ [ '.' for i in range(5) ] for j in range(5) ]
+        
         for y in range(size):
             for x in range(size):
                 unchanged = True
@@ -97,10 +143,12 @@ def mutation(levels):
 
                 if unchanged:
                     newMap[y][x] = map[y][x]
+            #end for
         #end for
         newLevels[level] = newMap.copy()
+        printMap(newMap, level)
         level += 1
-                
+
     return (newMap, newLevels)
 
 def biodiversityRating(map):
@@ -117,11 +165,20 @@ def part2(map):
     iterations = 10
     levels = {}
     resultMap = map
-    levels[0] = map
+    
 
+    # init levels maps for 1..100
+    for i in range(-10,10):
+        levels[i] = [ [ '.' for i in range(5) ] for j in range(5) ] 
+
+    levels[0] = map
+    newLevels = levels.copy()
     for i in range(iterations):
-        resultMap = mutation(resultMap, levels)
-    printMap(resultMap)
+        #printMap(levels.get(0))
+        (resultMap, newLevels) = mutation(newLevels)
+        
+    
+    #printMap(newLevels.get(0))
 
     return resultMap
 
